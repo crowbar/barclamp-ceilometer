@@ -57,8 +57,8 @@ locale_additions:
         edit_attributes: 
           attributes: Attributes
           keystone_instance: Keystone
-          service_user: Service user (for Keystone)
-          service_password: Service password
+          keystone_service_user: Service user (for Keystone)
+          keystone_service_password: Service password
       ceilometer_edit_deployment: 
         deployment: Deployment
 
