@@ -19,9 +19,9 @@ barclamp:
   proposal_schema_version: 1
   version: 0
   requires:
-    - @crowbar
+    - '@crowbar'
     - git
-    - mysql
+    - database
     - keystone
   member:
     - openstack 
@@ -30,22 +30,22 @@ barclamp:
 
 crowbar:
   layout: 1
-  order: 92 
+  order: 92
   run_order: 92
   chef_order: 100
 
 debs:
   ubuntu-12.04:
     repos:
-      - deb http://ubuntu-cloud.archive.canonical.com/ubuntu precise-updates/folsom main
-      - deb http://ubuntu-cloud.archive.canonical.com/ubuntu precise-proposed/folsom main
+      - deb http://ubuntu-cloud.archive.canonical.com/ubuntu precise-updates/grizzly main
+      - deb http://ubuntu-cloud.archive.canonical.com/ubuntu precise-proposed/grizzly main
   pkgs:
-#    - ceilometer-agent-central
-#    - ceilometer-agent-compute
-#    - ceilometer-api
-#    - ceilometer-collector
-#    - ceilometer-common
-#    - python-ceilometer
+    - ceilometer-agent-central
+    - ceilometer-agent-compute
+    - ceilometer-api
+    - ceilometer-collector
+    - ceilometer-common
+    - python-ceilometer
     - python-keystone
 
 locale_additions:
