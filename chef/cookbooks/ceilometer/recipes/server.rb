@@ -112,6 +112,7 @@ unless node[:ceilometer][:use_gitrepo]
       package "ceilometer-common"
       package "ceilometer-collector"
       package "ceilometer-api"
+    end
   end
   venv_prefix = nil
 else
