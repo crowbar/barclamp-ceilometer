@@ -46,13 +46,15 @@ else
     command "cp #{ceilometer_path}/etc/ceilometer/policy.json /etc/ceilometer"
     creates "/etc/ceilometer/policy.json"
   end
-  execute "cp_pipeline.yaml" do
-    command "cp #{ceilometer_path}/etc/ceilometer/pipeline.yaml /etc/ceilometer"
-    creates "/etc/ceilometer/pipeline.yaml"
-  end
 end
 
 include_recipe "#{@cookbook_name}::common"
+
+service "nova-compute" do
+  action :nothing
+  subscribes :restart, resources("template[/etc/ceilometer/ceilometer.conf]")
+  subscribes :restart, resources("template[/etc/ceilometer/pipeline.yaml]")
+end
 
 service "ceilometer-agent-compute" do
   if %w(suse).include?(node.platform)
@@ -63,4 +65,5 @@ service "ceilometer-agent-compute" do
   supports :status => true, :restart => true
   action :enable
   subscribes :restart, resources("template[/etc/ceilometer/ceilometer.conf]")
+  subscribes :restart, resources("template[/etc/ceilometer/pipeline.yaml]")
 end

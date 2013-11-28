@@ -6,6 +6,12 @@
     %p
       %label{ :for => :use_mongodb }= t('.use_mongodb')
       = select_tag :use_mongodb, options_for_select([['true','true'], ['false', 'false']], @proposal.raw_data['attributes'][@proposal.barclamp]["use_mongodb"].to_s), :onchange => "update_value('use_mongodb', 'use_mongodb', 'boolean')"
+    %p
+      %label{ :for => :meters_interval }= t('.meters_interval')
+      %input#meters_interval{:type => "text", :name => "meters_interval", :'data-default' => @proposal.raw_data['attributes'][@proposal.barclamp]["meters_interval"], :onchange => "update_value('meters_interval','meters_interval', 'number')"}
+    %p
+      %label{ :for => :meters_interval }= t('.cpu_interval')
+      %input#meters_interval{:type => "text", :name => "cpu_interval", :'data-default' => @proposal.raw_data['attributes'][@proposal.barclamp]["cpu_interval"], :onchange => "update_value('cpu_interval','cpu_interval', 'number')"}
     = render_instance_selector("database", :database_instance, t('.database_instance'), "database_instance", @proposal)
     = render_instance_selector("keystone", :keystone_instance, t('.keystone_instance'), "keystone_instance", @proposal)
     = render_instance_selector("rabbitmq", :rabbitmq_instance, t('.rabbitmq_instance'), "rabbitmq_instance", @proposal)
