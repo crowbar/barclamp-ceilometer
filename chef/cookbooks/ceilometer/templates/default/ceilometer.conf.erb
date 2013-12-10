@@ -17,6 +17,8 @@ signing_dir = /var/cache/ceilometer
 admin_tenant_name = <%= @keystone_service_tenant %>
 admin_password = <%= @keystone_service_password %>
 admin_user = <%= @keystone_service_user %>
+auth_host = <%= @keystone_address %>
+auth_port = <%= @keystone_admin_port %>
 auth_protocol = http
 
 
