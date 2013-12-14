@@ -91,6 +91,8 @@ locale_additions:
     barclamp:
       ceilometer:
         edit_attributes: 
+          cpu_interval: Seconds to update CPU meter
+          meters_interval: Seconds to update other meters
           attributes: Attributes
           use_mongodb: Use MongoDB instead of standard database
           database_instance: Database
