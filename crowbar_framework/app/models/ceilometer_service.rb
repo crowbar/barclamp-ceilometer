@@ -111,11 +111,11 @@ class CeilometerService < ServiceObject
     end
 
     agent_nodes = NodeObject.find("roles:nova-multi-compute-kvm") +
-      NodeObject.find("roles:nova-multi-compute-qemu") +
-      NodeObject.find("roles:nova-multi-compute-xen") +
-      NodeObject.find("roles:nova-multi-compute-esxi")
+                  NodeObject.find("roles:nova-multi-compute-qemu") +
+                  NodeObject.find("roles:nova-multi-compute-xen") +
+                  NodeObject.find("roles:nova-multi-compute-esxi")
 
-    server_nodes = NodeObject.find("roles:nova-multi-controller")
+    server_nodes = NodeObject.all.select { |n| n.intended_role == "controller" }
 
     base["deployment"]["ceilometer"]["elements"] = {
         "ceilometer-agent" =>  agent_nodes.map { |x| x.name },
