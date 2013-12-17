@@ -110,9 +110,12 @@ class CeilometerService < ServiceObject
       raise(I18n.t('model.service.dependency_missing', :name => @bc_name, :dependson => "rabbitmq"))
     end
 
-    nodes        = NodeObject.all
-    agent_nodes  = nodes.select { |n| n.intended_role == "compute" }
-    server_nodes = nodes.select { |n| n.intended_role == "controller" }
+    agent_nodes = NodeObject.find("roles:nova-multi-compute-kvm") +
+                  NodeObject.find("roles:nova-multi-compute-qemu") +
+                  NodeObject.find("roles:nova-multi-compute-xen") +
+                  NodeObject.find("roles:nova-multi-compute-esxi")
+
+    server_nodes = NodeObject.all.select { |n| n.intended_role == "controller" }
 
     base["deployment"]["ceilometer"]["elements"] = {
         "ceilometer-agent" =>  agent_nodes.map { |x| x.name },
