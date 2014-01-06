@@ -1,56 +1,6 @@
-::Chef::Recipe.send(:include, Opscode::OpenSSL::Password)
 
-node.set_unless['ceilometer']['db']['password'] = secure_password
-
-if node[:ceilometer][:sql_engine] == "mysql"
-    Chef::Log.info("Configuring Ceilometer to use MySQL backend")
-
-    include_recipe "mysql::client"
-
-    package "python-mysqldb" do
-        action :install
-    end
-
-    env_filter = " AND mysql_config_environment:mysql-config-#{node[:ceilometer][:mysql_instance]}"
-    mysqls = search(:node, "roles:mysql-server#{env_filter}") || []
-    if mysqls.length > 0
-        mysql = mysqls[0]
-        mysql = node if mysql.name == node.name
-    else
-        mysql = node
-    end
-
-    mysql_address = Chef::Recipe::Barclamp::Inventory.get_network_by_type(mysql, "admin").address if mysql_address.nil?
-    Chef::Log.info("Mysql server found at #{mysql_address}")
-    
-    # Create the Ceilometer Database
-    mysql_database "create #{node[:ceilometer][:db][:database]} database" do
-        host    mysql_address
-        username "db_maker"
-        password mysql[:mysql][:db_maker_password]
-        database node[:ceilometer][:db][:database]
-        action :create_db
-    end
-
-    mysql_database "create database user" do
-        host    mysql_address
-        username "db_maker"
-        password mysql[:mysql][:db_maker_password]
-        database node[:ceilometer][:db][:database]
-        action :query
-        sql "GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER on #{node[:ceilometer][:db][:database]}.* to '#{node[:ceilometer][:db][:user]}'@'%' IDENTIFIED BY '#{node[:ceilometer][:db][:password]}';"
-    end
-    sql_connection = "mysql://#{node[:ceilometer][:db][:user]}:#{node[:ceilometer][:db][:password]}@#{mysql_address}/#{node[:ceilometer][:db][:database]}"
-elsif node[:ceilometer][:sql_engine] == "sqlite"
-    Chef::Log.info("Configuring Ceilometer to use SQLite backend")
-    sql_connection = "sqlite:////var/lib/ceilometer/ceilometer.db"
-    file "/var/lib/ceilometer/ceilometer.db" do
-        owner "ceilometer"
-        action :create_if_missing
-    end
-end
-
-rabbits = search(:node, "recipes:nova\\:\\:rabbit") || []
+env_filter = " AND rabbitmq_config_environment:rabbitmq-config-#{node[:ceilometer][:rabbitmq_instance]}"
+rabbits = search(:node, "roles:rabbitmq-server#{env_filter}") || []
 if rabbits.length > 0
   rabbit = rabbits[0]
   rabbit = node if rabbit.name == node.name
@@ -59,21 +9,15 @@ else
 end
 rabbit_address = Chef::Recipe::Barclamp::Inventory.get_network_by_type(rabbit, "admin").address
 Chef::Log.info("Rabbit server found at #{rabbit_address}")
-if rabbit[:nova]
-  #agordeev:
-  # rabbit settings will work only after nova proposal be deployed
-  # and cinder services will be restarted then
-  rabbit_settings = {
-    :address => rabbit_address,
-    :port => rabbit[:nova][:rabbit][:port],
-    :user => rabbit[:nova][:rabbit][:user],
-    :password => rabbit[:nova][:rabbit][:password],
-    :vhost => rabbit[:nova][:rabbit][:vhost]
-  }
-else
-  rabbit_settings = nil
-end
+rabbit_settings = {
+  :address => rabbit_address,
+  :port => rabbit[:rabbitmq][:port],
+  :user => rabbit[:rabbitmq][:user],
+  :password => rabbit[:rabbitmq][:password],
+  :vhost => rabbit[:rabbitmq][:vhost]
+}
 
+env_filter = " AND keystone_config_environment:keystone-config-#{node[:ceilometer][:keystone_instance]}"
 keystones = search(:node, "recipes:keystone\\:\\:server#{env_filter}") || []
 if keystones.length > 0
   keystone = keystones[0]
@@ -82,47 +26,94 @@ else
   keystone = node
 end
 
-keystone_address = Chef::Recipe::Barclamp::Inventory.get_network_by_type(keystone, "admin").address if keystone_address.nil?
+keystone_host = keystone[:fqdn]
+keystone_protocol = keystone["keystone"]["api"]["protocol"]
 keystone_token = keystone["keystone"]["service"]["token"]
 keystone_admin_port = keystone["keystone"]["api"]["admin_port"]
 keystone_service_port = keystone["keystone"]["api"]["service_port"]
 keystone_service_tenant = keystone["keystone"]["service"]["tenant"]
-keystone_service_user = node[:glance][:service_user]
-keystone_service_password = node[:glance][:service_password]
-Chef::Log.info("Keystone server found at #{keystone_address}")
+keystone_service_user = node["ceilometer"]["keystone_service_user"]
+keystone_service_password = node["ceilometer"]["keystone_service_password"]
+Chef::Log.info("Keystone server found at #{keystone_host}")
 
-db_hosts = search(:node, "roles:ceilometer-server")
-db_host = db_hosts.name
+if node[:ceilometer][:use_mongodb]
+  db_hosts = search(:node, "roles:ceilometer-server") || []
+  if db_hosts.length > 0
+    db_host = db_hosts.first
+    db_host = node if db_host.name == node.name
+  else
+    db_host = node
+  end
+  mongodb_ip=Chef::Recipe::Barclamp::Inventory.get_network_by_type(db_host, "admin").address
+  db_connection = "mongodb://#{mongodb_ip}:27017/ceilometer"
+else
+  sql_env_filter = " AND database_config_environment:database-config-#{node[:ceilometer][:database_instance]}"
+  sqls = search(:node, "roles:database-server#{sql_env_filter}")
+  if sqls.length > 0
+    sql = sqls[0]
+    sql = node if sql.name == node.name
+  else
+    sql = node
+  end
+
+  sql_address = Chef::Recipe::Barclamp::Inventory.get_network_by_type(sql, "admin").address if sql_address.nil?
+  Chef::Log.info("SQL server found at #{sql_address}")
+
+  include_recipe "database::client"
+  backend_name = Chef::Recipe::Database::Util.get_backend_name(sql)
+  include_recipe "#{backend_name}::client"
+  include_recipe "#{backend_name}::python-client"
+
+  db_password = ''
+  if node.roles.include? "ceilometer-server"
+    # password is already created because common recipe comes
+    # after the server recipe
+    db_password = node[:ceilometer][:db][:password]
+  else
+    # pickup password to database from ceilometer-server node
+    node_controllers = search(:node, "roles:ceilometer-server") || []
+    if node_controllers.length > 0
+      db_password = node_controllers[0][:ceilometer][:db][:password]
+    end
+  end
+
+  db_connection = "#{backend_name}://#{node[:ceilometer][:db][:user]}:#{db_password}@#{sql_address}/#{node[:ceilometer][:db][:database]}"
+end
+
+metering_secret = ''
+if node.roles.include? "ceilometer-server"
+  # secret is already created because common recipe comes
+  # after the server recipe
+  metering_secret = node[:ceilometer][:metering_secret]
+else
+  # pickup secret from ceilometer-server node
+  node_controllers = search(:node, "roles:ceilometer-server") || []
+  if node_controllers.length > 0
+    metering_secret = node_controllers[0][:ceilometer][:metering_secret]
+  end
+end
 
 template "/etc/ceilometer/ceilometer.conf" do
     source "ceilometer.conf.erb"
-    mode "0644"
+    owner node[:ceilometer][:user]
+    group "root"
+    mode "0640"
     variables(
-      :sql_connection => sql_connection,
-      :sql_idle_timeout => node[:ceilometer][:sql][:idle_timeout],
-      :sql_min_pool_size => node[:ceilometer][:sql][:min_pool_size],
-      :sql_max_pool_size => node[:ceilometer][:sql][:max_pool_size],
-      :sql_pool_timeout => node[:ceilometer][:sql][:pool_timeout],
       :debug => node[:ceilometer][:debug],
       :verbose => node[:ceilometer][:verbose],
-      :use_syslog => node[:ceilometer][:use_syslog],
       :rabbit_settings => rabbit_settings,
-      :keystone_address => keystone_address,
+      :keystone_protocol => keystone_protocol,
+      :keystone_host => keystone_host,
       :keystone_auth_token => keystone_token,
       :keystone_service_port => keystone_service_port,
       :keystone_service_user => keystone_service_user,
       :keystone_service_password => keystone_service_password,
       :keystone_service_tenant => keystone_service_tenant,
       :keystone_admin_port => keystone_admin_port,
-      :db_host => db_host
+      :api_port => node[:ceilometer][:api][:port],
+      :metering_secret => metering_secret,
+      :database_connection => db_connection,
+      :node_hostname => node['hostname']
     )
-    notifies :restart, resources(:service => "ceilometer-collector"), :immediately
 end
-
-#execute "ceilometer-manage db_sync" do
-#  action :run
-#end
-
-my_ipaddress = Chef::Recipe::Barclamp::Inventory.get_network_by_type(node, "admin").address
-pub_ipaddress = Chef::Recipe::Barclamp::Inventory.get_network_by_type(node, "public").address rescue my_ipaddress
 

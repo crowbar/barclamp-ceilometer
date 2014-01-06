@@ -15,38 +15,52 @@
 
 unless node[:ceilometer][:use_gitrepo]
   package "ceilometer-agent-compute" do
+    if %w(suse).include?(node.platform)
+      package_name "openstack-ceilometer-agent-compute"
+    elsif %w(redhat centos).include?(node.platform)
+      package_name "openstack-ceilometer-compute"
+    end
     action :install
   end
 else
   ceilometer_path = "/opt/ceilometer"
-  pfs_and_install_deps("ceilometer")
-  link_service "ceilometer-agent-compute"
-  create_user_and_dirs(ceilometer-agent-compute) 
+
+  venv_path = node[:ceilometer][:use_virtualenv] ? "#{ceilometer_path}/.venv" : nil
+  venv_prefix = node[:ceilometer][:use_virtualenv] ? ". #{venv_path}/bin/activate &&" : nil
+  puts "venv_path=#{venv_path}"
+  puts "use_virtualenv=#{node[:ceilometer][:use_virtualenv]}"
+  pfs_and_install_deps "ceilometer" do
+    cookbook "ceilometer"
+    cnode node
+    virtualenv venv_path
+    path ceilometer_path
+    wrap_bins [ "ceilometer" ]
+  end
+
+  link_service "ceilometer-agent-compute" do
+    virtualenv venv_path
+  end
+
+  create_user_and_dirs(@cookbook_name)
   execute "cp_policy.json" do
-    command "cp #{ceilometer_path}/etc/policy.json /etc/ceilometer"
+    command "cp #{ceilometer_path}/etc/ceilometer/policy.json /etc/ceilometer"
     creates "/etc/ceilometer/policy.json"
   end
   execute "cp_pipeline.yaml" do
-    command "cp #{ceilometer_path}/etc/pipeline.yaml /etc/ceilometer"
+    command "cp #{ceilometer_path}/etc/ceilometer/pipeline.yaml /etc/ceilometer"
     creates "/etc/ceilometer/pipeline.yaml"
   end
 end
 
-service "ceilometer-agent-compute" do
-  supports :status => true, :restart => true
-  action :enable
-end
-
 include_recipe "#{@cookbook_name}::common"
 
-# Create ceilometer service
-  ceilometer_register "register ceilometer service" do
-  host my_ipaddress
-  #port node[:ceilometer][:api][:port]
-  service_name "ceilometer-agent-compute"
-  service_type "collector"
-  service_description "Openstack Collector Service"
-  action :add_service
+service "ceilometer-agent-compute" do
+  if %w(suse).include?(node.platform)
+    service_name "openstack-ceilometer-agent-compute"
+  elsif %w(redhat centos).include?(node.platform)
+    service_name "openstack-ceilometer-compute"
+  end
+  supports :status => true, :restart => true
+  action :enable
+  subscribes :restart, resources("template[/etc/ceilometer/ceilometer.conf]")
 end
-
-node.save
