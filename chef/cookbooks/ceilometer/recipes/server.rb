@@ -230,6 +230,20 @@ keystone_register "give ceilometer user access" do
   action :add_access
 end
 
+swift_nodes = search(:node, "roles:swift-proxy") || []
+unless swift_nodes.empty?
+  keystone_register "give ceilometer user ResellerAdmin role" do
+    protocol keystone_protocol
+    host keystone_host
+    port keystone_admin_port
+    token keystone_token
+    user_name keystone_service_user
+    tenant_name keystone_service_tenant
+    role_name "ResellerAdmin"
+    action :add_access
+  end
+end
+
 # Create ceilometer service
 keystone_register "register ceilometer service" do
   protocol keystone_protocol
