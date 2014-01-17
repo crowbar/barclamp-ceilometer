@@ -22,7 +22,7 @@ barclamp:
     - '@crowbar'
     - git
     - database
-    - rabbitmq
+    - messaging
     - keystone
   member:
     - openstack 
