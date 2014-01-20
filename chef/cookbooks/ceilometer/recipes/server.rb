@@ -230,7 +230,8 @@ keystone_register "give ceilometer user access" do
   action :add_access
 end
 
-swift_nodes = search(:node, "roles:swift-proxy") || []
+env_filter = " AND database_config_environment:database-config-#{node[:ceilometer][:database_instance]}"
+swift_nodes = search(:node, "roles:swift-proxy#{env_filter}") || []
 unless swift_nodes.empty?
   keystone_register "give ceilometer user ResellerAdmin role" do
     protocol keystone_protocol
