@@ -4,6 +4,12 @@
   = link_to "Raw", proposal_barclamp_path(:id => @proposal.name, :controller => @proposal.barclamp, :dep_raw => @dep_raw, :attr_raw => true), :style => "float: right;"
   %div.container
     %p
+      %label{ :for => :debug }= t('.debug')
+      = select_tag :debug, options_for_select([['true','true'], ['false', 'false']], @proposal.raw_data['attributes'][@proposal.barclamp]["debug"].to_s), :onchange => "update_value('debug', 'debug', 'boolean')"
+    %p
+      %label{ :for => :verbose }= t('.verbose')
+      = select_tag :verbose, options_for_select([['true','true'], ['false', 'false']], @proposal.raw_data['attributes'][@proposal.barclamp]["verbose"].to_s), :onchange => "update_value('verbose', 'verbose', 'boolean')"
+    %p
       %label{ :for => :use_mongodb }= t('.use_mongodb')
       = select_tag :use_mongodb, options_for_select([['true','true'], ['false', 'false']], @proposal.raw_data['attributes'][@proposal.barclamp]["use_mongodb"].to_s), :onchange => "update_value('use_mongodb', 'use_mongodb', 'boolean')"
     = render_instance_selector("database", :database_instance, t('.database_instance'), "database_instance", @proposal)
