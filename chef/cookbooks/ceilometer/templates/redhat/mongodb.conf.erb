@@ -1,10 +1,11 @@
 # mongodb.conf
 
 # Where to store the data.
-dbpath=/var/lib/mongo
+dbpath=/var/lib/mongodb
 
+pidfilepath = /var/run/mongodb/mongodb.pid
 #where to log
-logpath=/var/log/mongo/mongod.log
+logpath=/var/log/mongodb/mongodb.log
 
 logappend=true
 
@@ -50,7 +51,7 @@ smallfiles=true
 #nohints = true
 
 # Disable the HTTP interface (Defaults to localhost:27018).
-#nohttpinterface = true
+nohttpinterface = true
 
 # Turns off server-side scripting.  This will result in greatly limited
 # functionality
