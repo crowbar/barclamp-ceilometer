@@ -31,10 +31,36 @@ else
   create_user_and_dirs(@cookbook_name)
 end
 
+# create dir before ::common tries to write /etc/ceilometer/ceilometer.conf
+directory "/etc/ceilometer" do
+  owner "root"
+  group "root"
+  mode 00755
+  action :create
+end
 
 include_recipe "#{@cookbook_name}::common"
 
-# TODO are the keystone values known from included common recipe or do we have to do explicit search again?
+env_filter = " AND keystone_config_environment:keystone-config-#{node[:ceilometer][:keystone_instance]}"
+keystones = search(:node, "recipes:keystone\\:\\:server#{env_filter}") || []
+if keystones.length > 0
+  keystone = keystones[0]
+  keystone = node if keystone.name == node.name
+else
+  keystone = node
+end
+
+keystone_host = keystone[:fqdn]
+keystone_protocol = keystone["keystone"]["api"]["protocol"]
+keystone_token = keystone["keystone"]["service"]["token"]
+keystone_admin_port = keystone["keystone"]["api"]["admin_port"]
+keystone_service_port = keystone["keystone"]["api"]["service_port"]
+keystone_service_tenant = keystone["keystone"]["service"]["tenant"]
+keystone_service_user = node["ceilometer"]["keystone_service_user"]
+keystone_service_password = node["ceilometer"]["keystone_service_password"]
+Chef::Log.info("Keystone server found at #{keystone_host}")
+
+
 keystone_register "give ceilometer user ResellerAdmin role" do
   protocol keystone_protocol
   host keystone_host
@@ -47,12 +73,21 @@ keystone_register "give ceilometer user ResellerAdmin role" do
 end
 
 # swift user needs read access to ceilometer.conf
-user node[:swift][:user] do
-  gid node[:ceilometer][:group]
+group node[:ceilometer][:group] do
+  action :modify
+  members node[:swift][:user]
+  append true
 end
 
 # log dir (/var/log/ceilometer) is currently not configurable
-file "/var/log/ceilometer/swift-proxy-server.log"
+directory "/var/log/ceilometer" do
+  owner "root"
+  group "root"
+  mode 00755
+  action :create
+end
+
+file "/var/log/ceilometer/swift-proxy-server.log" do
   owner node[:swift][:user]
   group node[:swift][:group]
   mode  "0644"
