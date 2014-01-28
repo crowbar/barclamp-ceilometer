@@ -81,7 +81,12 @@ class CeilometerService < ServiceObject
       validate_dep_proposal_is_active "git", proposal["attributes"][@bc_name]["git_instance"]
     end
 
-    # FIXME ensure ceilometer-swift-proxy is on swift-proxy node?
+    swift_proxy_nodes = NodeObject.find("roles:swift-proxy").map { |x| x.name }
+    proposal["deployment"]["ceilometer"]["elements"]["ceilometer-swift-proxy-middleware"].each do |n|
+      unless swift_proxy_nodes.include? n
+        validation_error("The node with ceilometer-swift-proxy-midleware role needs to have swift-proxy role deployed.")
+      end
+    end
 
     super
   end
