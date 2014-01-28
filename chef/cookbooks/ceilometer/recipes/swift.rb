@@ -15,9 +15,22 @@
 
 unless node[:ceilometer][:use_gitrepo]
   package "python-ceilometer"
-  package "openstack-ceilometer" # needed for pipeline.yaml (at  least)
+else
+  ceilometer_path = "/opt/ceilometer"
+  venv_path = node[:ceilometer][:use_virtualenv] ? "#{ceilometer_path}/.venv" : nil
+  venv_prefix = node[:ceilometer][:use_virtualenv] ? ". #{venv_path}/bin/activate &&" : nil
+  puts "venv_path=#{venv_path}"
+  puts "use_virtualenv=#{node[:ceilometer][:use_virtualenv]}"
+  pfs_and_install_deps "ceilometer" do
+    cookbook "ceilometer"
+    cnode node
+    virtualenv venv_path
+    path ceilometer_path
+    wrap_bins [ "ceilometer" ]
+  end
+  create_user_and_dirs(@cookbook_name)
 end
-# TODO else git_repo?
+
 
 include_recipe "#{@cookbook_name}::common"
 
@@ -33,9 +46,18 @@ keystone_register "give ceilometer user ResellerAdmin role" do
   action :add_access
 end
 
-# TODO prepare /var/log/ceilometer/swift-proxy-server.log - writable for swift-proxy
-# TODO check swift rights to /etc/ceilometer/ceilometer.conf - readable by swift-proxy
-# ----> make those part of openstack-ceilometer package + add openstack-swift to openstack-ceilometer group
+# swift user needs read access to ceilometer.conf
+user node[:swift][:user] do
+  gid node[:ceilometer][:group]
+end
+
+# log dir (/var/log/ceilometer) is currently not configurable
+file "/var/log/ceilometer/swift-proxy-server.log"
+  owner node[:swift][:user]
+  group node[:swift][:group]
+  mode  "0644"
+  action :create_if_missing
+end
 
 
-# TODO update pipeline.yaml with some storage specific parts?
+# possibly update pipeline.yaml with some storage specific parts
