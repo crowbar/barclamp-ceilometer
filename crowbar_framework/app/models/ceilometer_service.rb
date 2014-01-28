@@ -64,7 +64,7 @@ class CeilometerService < ServiceObject
         "ceilometer-agent" =>  agent_nodes.map { |x| x.name },
         "ceilometer-cagent" =>  server_nodes.map { |x| x.name },
         "ceilometer-server" =>  server_nodes.map { |x| x.name },
-        "ceilometer-swift-proxy" =>  swift_proxy_nodes.map { |x| x.name }
+        "ceilometer-swift-proxy-middleware" =>  swift_proxy_nodes.map { |x| x.name }
     } unless agent_nodes.nil? or server_nodes.nil?
 
     base["attributes"]["ceilometer"]["keystone_service_password"] = '%012d' % rand(1e12)
