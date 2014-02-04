@@ -93,8 +93,5 @@ locale_additions:
       ceilometer_edit_deployment: 
         deployment: Deployment
 
-pips:
-  - python-ceilometerclient>=1.0.0
-
 git_repo:
   - ceilometer https://github.com/openstack/ceilometer.git stable/havana
