@@ -18,10 +18,10 @@
 if node[:ceilometer][:use_mongodb]
   case node["platform"]
     when "centos", "redhat"
-      mongo_conf = "/etc/mongod.conf"
+      mongo_conf = "/etc/mongodb.conf"
       mongo_service = "mongod"
-      package "mongo-10gen"
-      package "mongo-10gen-server"
+      package "mongodb"
+      package "mongodb-server"
     else
       mongo_conf = "/etc/mongodb.conf"
       mongo_service = "mongodb"

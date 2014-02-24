@@ -20,7 +20,6 @@ barclamp:
   version: 0
   requires:
     - '@crowbar'
-    - git
     - database
     - rabbitmq
     - keystone
@@ -65,7 +64,7 @@ rpms:
     repos:
       - bare os-havana 50 http://repos.fedorapeople.org/repos/openstack/openstack-havana/epel-6
   pkgs:
-    - openstack-ceilometer
+    - openstack-ceilometer-alarm
     - openstack-ceilometer-api
     - openstack-ceilometer-central
     - openstack-ceilometer-collector
@@ -73,9 +72,9 @@ rpms:
     - openstack-ceilometer-compute
     - python-ceilometer
     - python-ceilometerclient
-    - mongo-10gen
-    - mongo-10gen-server
-    - pymongo
+    - mongodb
+    - mongodb-server
+    - python-pymongo
 
 
 locale_additions:
@@ -92,9 +91,6 @@ locale_additions:
           rabbitmq_instance: RabbitMQ
       ceilometer_edit_deployment: 
         deployment: Deployment
-
-pips:
-  - python-ceilometerclient>=1.0.0
 
 git_repo:
   - ceilometer https://github.com/openstack/ceilometer.git stable/havana
