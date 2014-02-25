@@ -1,6 +1,9 @@
 [DEFAULT]
 
+<% if %w{ubuntu}.include?(node['platform']) -%>
 host=<%= @node_hostname %>
+<% end -%>
+
 #
 # Options defined in ceilometer.middleware
 #
