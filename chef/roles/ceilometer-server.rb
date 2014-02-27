@@ -1,3 +1,4 @@
+# -*- encoding : utf-8 -*-
 name "ceilometer-server"
 description "Ceilometer Server Role"
 run_list(

@@ -1,3 +1,4 @@
+# -*- encoding : utf-8 -*-
 def upgrade ta, td, a, d
   a['cpu_interval'] = ta['cpu_interval']
   a['meters_interval'] = ta['meters_interval']

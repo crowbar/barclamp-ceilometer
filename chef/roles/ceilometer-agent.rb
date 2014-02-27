@@ -1,3 +1,4 @@
+# -*- encoding : utf-8 -*-
 name "ceilometer-agent"
 description "Ceilometer Agent Role"
 run_list(
