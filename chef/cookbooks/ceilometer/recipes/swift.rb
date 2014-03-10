@@ -18,9 +18,9 @@ unless node[:ceilometer][:use_gitrepo]
     when "ubuntu"
       package "ceilometer-common"
       package "swift-proxy"
-    when "suse"
+    else
       package "openstack-ceilometer"
-      package "openstack-swift-proxy" # we need it for swift user presencepackage "openstack-swift-proxy" # we need it for swift user presence
+      package "openstack-swift-proxy" # we need it for swift user presence
     end
 else
   ceilometer_path = "/opt/ceilometer"
