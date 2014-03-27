@@ -12,16 +12,16 @@ rabbit_settings = {
 keystone_settings = CeilometerHelper.keystone_settings(node)
 
 if node[:ceilometer][:use_mongodb]
-  db_host = nil
-  db_hosts = search_env_filtered(:node, "roles:ceilometer-server")
   if node[:ceilometer][:ha][:server][:enabled]
-    # Currently, we only setup mongodb non-HA on the first node
-    db_host = db_hosts.select { |n| CrowbarPacemakerHelper.is_cluster_founder?(n) }.first
+    db_hosts = search(:node, "ceilometer_ha_mongodb_replica_set_member:true")
+    instances = db_hosts.map {|s| "#{s.address.addr}:#{s[:ceilometer][:mongodb][:port]}"}
+    db_connection = "mongodb://#{instances.join(',')}/ceilometer?replicaSet=#{node[:ceilometer][:ha][:mongodb][:replica_set][:name]}"
+  else
+    db_hosts = search_env_filtered(:node, "roles:ceilometer-server")
+    db_host ||= db_hosts.first || node
+    mongodb_ip = Chef::Recipe::Barclamp::Inventory.get_network_by_type(db_host, "admin").address
+    db_connection = "mongodb://#{mongodb_ip}:#{db_host[:ceilometer][:mongodb][:port]}/ceilometer"
   end
-  db_host ||= db_hosts.first || node
-
-  mongodb_ip = Chef::Recipe::Barclamp::Inventory.get_network_by_type(db_host, "admin").address
-  db_connection = "mongodb://#{mongodb_ip}:27017/ceilometer"
 else
   sql = get_instance('roles:database-server')
 
