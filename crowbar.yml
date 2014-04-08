@@ -85,6 +85,8 @@ locale_additions:
       ceilometer:
         edit_attributes: 
           attributes: Attributes
+          debug: Debug
+          verbose: Verbose
           use_mongodb: Use MongoDB instead of standard database
           database_instance: Database
           keystone_instance: Keystone
