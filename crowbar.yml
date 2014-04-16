@@ -23,6 +23,10 @@ barclamp:
     - database
     - rabbitmq
     - keystone
+    - glance
+    - cinder
+    - neutron
+    - nova
   member:
     - openstack 
   os_support:
