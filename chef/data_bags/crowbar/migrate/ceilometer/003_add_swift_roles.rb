@@ -1,3 +1,4 @@
+# -*- encoding : utf-8 -*-
 def upgrade ta, td, a, d
   d['element_states'] = td['element_states']
   d['element_order'] = td['element_order']

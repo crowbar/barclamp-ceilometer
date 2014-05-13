@@ -1,6 +1,6 @@
 = attributes_for @proposal do
   .panel-sub
-    = header @dep_raw, true
+    = header dep_raw, true
 
   .panel-body
     = instance_field :database
@@ -13,4 +13,4 @@
     = boolean_field :use_mongodb
     = boolean_field :verbose
 
-    = render "barclamp/git/pfsdeps"
+    = render partial: "barclamp/git/pfsdeps"

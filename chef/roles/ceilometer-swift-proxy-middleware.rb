@@ -1,3 +1,4 @@
+# -*- encoding : utf-8 -*-
 name "ceilometer-swift-proxy-middleware"
 description "Ceilometer Swift Support"
 run_list(

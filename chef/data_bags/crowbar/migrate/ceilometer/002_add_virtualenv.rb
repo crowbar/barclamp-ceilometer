@@ -1,3 +1,4 @@
+# -*- encoding : utf-8 -*-
 def upgrade ta, td, a, d
   a['use_virtualenv'] = ta['use_virtualenv']
   return a, d

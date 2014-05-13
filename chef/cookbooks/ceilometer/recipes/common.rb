@@ -1,3 +1,4 @@
+# -*- encoding : utf-8 -*-
 
 rabbit = get_instance('roles:rabbitmq-server')
 Chef::Log.info("Rabbit server found at #{rabbit[:rabbitmq][:address]}")

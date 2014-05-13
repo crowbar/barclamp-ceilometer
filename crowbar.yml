@@ -1,37 +1,34 @@
-# Copyright 2012, Dell Inc.
+#
+# Copyright 2011-2013, Dell
+# Copyright 2013-2014, SUSE LINUX Products GmbH
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+#   http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
 
 barclamp:
-  name: ceilometer
-  display: Ceilometer
+  name: 'ceilometer'
+  display: 'Ceilometer'
   description: 'Telemetry Module: Measurements collection for monitoring and metering'
-  proposal_schema_version: 1
   version: 0
+  member:
+    - 'openstack'
   requires:
     - '@crowbar'
-    - git
-    - pacemaker
-    - database
-    - rabbitmq
-    - keystone
-  member:
-    - openstack 
-  os_support:
-    - ubuntu-12.04
-
-smoketest:
-  timeout: 1200
+    - 'git'
+    - 'pacemaker'
+    - 'database'
+    - 'rabbitmq'
+    - 'keystone'
 
 crowbar:
   layout: 1
@@ -40,47 +37,50 @@ crowbar:
   chef_order: 101
   proposal_schema_version: 2
 
+smoketest:
+  timeout: 1200
+
 debs:
   ubuntu-12.04:
     repos:
-      - deb http://ubuntu-cloud.archive.canonical.com/ubuntu precise-updates/icehouse main
-      - deb http://ubuntu-cloud.archive.canonical.com/ubuntu precise-proposed/icehouse main
+      - 'deb http://ubuntu-cloud.archive.canonical.com/ubuntu precise-updates/icehouse main'
+      - 'deb http://ubuntu-cloud.archive.canonical.com/ubuntu precise-proposed/icehouse main'
   pkgs:
-    - ceilometer-agent-central
-    - ceilometer-agent-compute
-    - ceilometer-api
-    - ceilometer-collector
-    - ceilometer-common
-    - python-ceilometer
-    - python-ceilometerclient
-    - mongodb
-    - python-keystone
-    - python-pymongo
+    - 'ceilometer-agent-central'
+    - 'ceilometer-agent-compute'
+    - 'ceilometer-api'
+    - 'ceilometer-collector'
+    - 'ceilometer-common'
+    - 'python-ceilometer'
+    - 'python-ceilometerclient'
+    - 'mongodb'
+    - 'python-keystone'
+    - 'python-pymongo'
 
 rpms:
   centos-6.4:
     repos:
-      - bare openstack icehouse http://repos.fedorapeople.org/repos/openstack/openstack-icehouse/epel-6/
-      - bare MongoDB 10 http://downloads-distro.mongodb.org/repo/redhat/os/x86_64/
+      - 'bare openstack icehouse http://repos.fedorapeople.org/repos/openstack/openstack-icehouse/epel-6/'
+      - 'bare MongoDB 10 http://downloads-distro.mongodb.org/repo/redhat/os/x86_64/'
   redhat-6.4:
     repos:
-      - bare openstack icehouse http://repos.fedorapeople.org/repos/openstack/openstack-icehouse/epel-6/
-      - bare MongoDB 10 http://downloads-distro.mongodb.org/repo/redhat/os/x86_64/
+      - 'bare openstack icehouse http://repos.fedorapeople.org/repos/openstack/openstack-icehouse/epel-6/'
+      - 'bare MongoDB 10 http://downloads-distro.mongodb.org/repo/redhat/os/x86_64/'
   pkgs:
-    - openstack-ceilometer-alarm
-    - openstack-ceilometer-api
-    - openstack-ceilometer-central
-    - openstack-ceilometer-collector
-    - openstack-ceilometer-common
-    - openstack-ceilometer-compute
-    - python-ceilometer
-    - python-ceilometerclient
-    - mongodb
-    - mongodb-server
-    - python-pymongo
+    - 'openstack-ceilometer-alarm'
+    - 'openstack-ceilometer-api'
+    - 'openstack-ceilometer-central'
+    - 'openstack-ceilometer-collector'
+    - 'openstack-ceilometer-common'
+    - 'openstack-ceilometer-compute'
+    - 'python-ceilometer'
+    - 'python-ceilometerclient'
+    - 'mongodb'
+    - 'mongodb-server'
+    - 'python-pymongo'
 
 pips:
-  - python-ceilometerclient>=1.0.0
+  - 'python-ceilometerclient>=1.0.0'
 
 git_repo:
-  - ceilometer https://github.com/openstack/ceilometer.git stable/icehouse
+  - 'ceilometer https://github.com/openstack/ceilometer.git stable/icehouse'
