@@ -23,4 +23,8 @@ class CeilometerController < BarclampController
   def initialize_service
     @service_object = CeilometerService.new logger
   end
+
+  def permitted_params
+    params.require(:ceilometer)
+  end
 end
