@@ -89,7 +89,7 @@ template "/etc/ceilometer/ceilometer.conf" do
       :libvirt_type => libvirt_type,
       :alarm_threshold_evaluation_interval => node[:ceilometer][:alarm_threshold_evaluation_interval]
     )
-    if node.roles.include?("ceilometer-agent")
+    if node.roles.include?("ceilometer-agent") && node.roles.include?("nova-multi-compute-#{libvirt_type}")
       notifies :restart, "service[nova-compute]"
     end
 end
@@ -105,7 +105,7 @@ template "/etc/ceilometer/pipeline.yaml" do
       :disk_interval => node[:ceilometer][:disk_interval],
       :network_interval => node[:ceilometer][:network_interval]
   })
-  if node.roles.include?("ceilometer-agent")
+  if node.roles.include?("ceilometer-agent") && node.roles.include?("nova-multi-compute-#{libvirt_type}")
     notifies :restart, "service[nova-compute]"
   end
 end
