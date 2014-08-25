@@ -16,59 +16,32 @@
 ha_enabled = node[:ceilometer][:ha][:server][:enabled]
 
 if node[:ceilometer][:use_mongodb]
-  if !ha_enabled || CrowbarPacemakerHelper.is_cluster_founder?(node)
-    case node["platform"]
-      when "centos", "redhat"
-        mongo_conf = "/etc/mongod.conf"
-        mongo_service = "mongod"
-        package "mongo-10gen"
-        package "mongo-10gen-server"
-      else
-        mongo_conf = "/etc/mongodb.conf"
-        mongo_service = "mongodb"
-        package "mongodb" do
-          action :install
-        end
-    end
+  include_recipe "ceilometer::mongodb" if !node[:ceilometer][:ha][:server][:enabled] || node[:ceilometer][:ha][:mongodb][:replica_set][:member]
 
-    mongodb_address  = Chef::Recipe::Barclamp::Inventory.get_network_by_type(node, "admin").address
-
-    template mongo_conf do
-      mode 0644
-      source "mongodb.conf.erb"
-      variables(:listen_addr => mongodb_address)
-      notifies :restart, "service[#{mongo_service}]", :immediately
-    end
-
-    service mongo_service do
-      supports :status => true, :restart => true
-      action [:enable, :start]
-    end
+  # need to wait for mongodb to start even if it's on a
+  # different host (ceilometer services need it running)
+  members = search(:node, "ceilometer_ha_mongodb_replica_set_member:true")
+  # if we don't have HA enabled, then mongodb should be on the current host
+  if members.empty?
+    node_address = Chef::Recipe::Barclamp::Inventory.get_network_by_type(node, "admin").address
   else
-    # HA is enabled, and we're not the cluster founder
-    # Currently, we only setup mongodb non-HA on the first node, so wait for this one...
-    db_hosts = search_env_filtered(:node, "roles:ceilometer-server")
-    db_host = db_hosts.select { |n| CrowbarPacemakerHelper.is_cluster_founder?(n) }.first
-    mongodb_address  = Chef::Recipe::Barclamp::Inventory.get_network_by_type(db_host, "admin").address
+    node_address = members.first.fqdn
   end
-
-  # wait for mongodb start (ceilometer services need it running)
   ruby_block "wait for mongodb start" do
     block do
       require 'timeout'
       begin
         Timeout.timeout(60) do
-          while ! ::Kernel.system("mongo #{mongodb_address} --quiet < /dev/null &> /dev/null")
+          while ! ::Kernel.system("mongo #{node_address} --quiet < /dev/null &> /dev/null")
             Chef::Log.debug("mongodb still not reachable")
             sleep(2)
           end
         end
       rescue Timeout::Error
-        Chef::Log.warn("mongodb does not seem to be responding 1 minute after start")
+        Chef::Log.warn("mongodb on #{node_address} does not seem to be responding after trying for 1 minute")
       end
-    end # block
-  end # ruby_block
-
+    end
+  end
 else
   sql = get_instance('roles:database-server')
   include_recipe "database::client"
