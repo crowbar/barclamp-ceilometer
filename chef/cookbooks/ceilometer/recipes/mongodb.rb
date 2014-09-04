@@ -34,11 +34,10 @@ template mongo_conf do
   variables(
     :listen_addr => Chef::Recipe::Barclamp::Inventory.get_network_by_type(node, "admin").address
     )
-  # notifies :restart, "service[#{mongo_service}]", :immediately
+  notifies :restart, "service[#{mongo_service}]", :immediately
 end
 
 ha_enabled = node[:ceilometer][:ha][:server][:enabled]
-node_is_controller = node[:ceilometer][:ha][:mongodb][:replica_set][:controller]
 
 service mongo_service do
   supports :status => true, :restart => true
@@ -62,7 +61,7 @@ if ha_enabled
 
   crowbar_pacemaker_sync_mark "create-mongodb_service"
 
-  if node_is_controller
+  if node[:ceilometer][:ha][:mongodb][:replica_set][:controller]
     # install the package immediately because we need it to configure the
     # replicaset
     package("rubygem-mongo").run_action(:install)
@@ -71,6 +70,28 @@ if ha_enabled
       "ceilometer_ha_mongodb_replica_set_member:true AND "\
       "ceilometer_config_environment:#{node[:ceilometer][:config][:environment]}"
       ).sort
-    CeilometerHelper.configure_replicaset(node, "crowbar-ceilometer", members)
+
+    # configure replica set in a ruby block where we also wait for mongodb
+    # because we need mongodb to be started (which is not the case in compile
+    # phase)
+    ruby_block "Configure MongoDB replica set" do
+      block do
+        require 'timeout'
+        begin
+          mongodb_address = Chef::Recipe::Barclamp::Inventory.get_network_by_type(node, "admin").address
+
+          Timeout.timeout(120) do
+            while ! ::Kernel.system("mongo #{mongodb_address} --quiet < /dev/null &> /dev/null")
+              Chef::Log.debug("mongodb still not reachable")
+              sleep(2)
+            end
+
+            CeilometerHelper.configure_replicaset(node, "crowbar-ceilometer", members)
+          end
+        rescue Timeout::Error
+          Chef::Log.warn("Cannot configure replicaset: mongodb does not seem to be responding after trying for 1 minute")
+        end
+      end
+    end
   end
 end
