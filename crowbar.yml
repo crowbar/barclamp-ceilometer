@@ -28,6 +28,7 @@ barclamp:
     - database
     - rabbitmq
     - keystone
+    - nova
   member:
     - openstack 
   os_support:
