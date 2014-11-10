@@ -55,7 +55,7 @@
       "elements": {},
       "element_order": [
         [ "ceilometer-server" ],
-        [ "ceilometer-cagent" ], 
+        [ "ceilometer-cagent" ],
         [ "ceilometer-agent" ],
         [ "ceilometer-swift-proxy-middleware" ]
       ],
