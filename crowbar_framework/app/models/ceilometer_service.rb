@@ -32,10 +32,7 @@ class CeilometerService < PacemakerServiceObject
       {
         "ceilometer-agent" => {
           "unique" => false,
-          "count" => -1,
-          "exclude_platform" => {
-            "windows" => "/.*/"
-          }
+          "count" => -1
         },
         "ceilometer-cagent" => {
           "unique" => false,
