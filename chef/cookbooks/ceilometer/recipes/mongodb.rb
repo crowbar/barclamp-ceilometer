@@ -57,6 +57,9 @@ if ha_enabled
 
   pacemaker_clone "cl-mongodb" do
     rsc "mongodb"
+    meta ({
+      "interleave" => "true",
+    })
     action [:create, :start]
     only_if { CrowbarPacemakerHelper.is_cluster_founder?(node) }
   end
